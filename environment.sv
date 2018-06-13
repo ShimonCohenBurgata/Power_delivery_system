@@ -22,6 +22,21 @@ class Scb_Monitor_cbs extends Monitor_cbs;
 	endtask : post_trans
 endclass : Scb_Monitor_cbs
 
+/////////////////////////////////////////////////////////
+// Call coverage from Monitor using callbacks
+/////////////////////////////////////////////////////////
+class Cov_Monitor_cbs extends Monitor_cbs;
+	Coverage cov;
+
+	function new(Coverage cov);
+		this.cov=cov;
+	endfunction : new
+
+	virtual task post_trans(input Monitor mon);
+		cov.sample(mon);
+	endtask : post_trans
+endclass : Cov_Monitor_cbs
+
 
 /////////////////////////////////////////////////////////
 class Environment;
@@ -32,6 +47,7 @@ class Environment;
 	Prs_generator gen;	// Generator object
 	Monitor mon;		// Monitor object
 	Scoreboard scb;		// Scoreboard object
+	Coverage cov;
 	virtual Inf.MON imon;	// Virtual interface for monitor object
 	virtual Inf.DRV idrv;	// Virtual interface for driver object
 	Config cfg;		// Configuration object
@@ -58,12 +74,10 @@ function Environment::new(input virtual Inf.MON imon,
 		cfg=new();
 endfunction : new
 
-
 //---------------------------------------------------------------------------
 // Randomize the configuration descriptor
 //---------------------------------------------------------------------------
 function void Environment::gen_cfg();
-	assert(cfg.randomize());
 	cfg.display();
 endfunction :gen_cfg
 
@@ -74,8 +88,9 @@ function void Environment::build();
 	gen2drv=new();
 	gen=new(gen2drv, drv2gen, cfg);
 	drv=new(gen2drv, drv2gen, idrv);
-	mon=new(imon);
+	mon=new(imon,"moniotr1");
 	scb=new(numPorts,cfg);
+	cov=new();
 
 	// Connect the scoreboard with callbacks
 	begin
@@ -83,6 +98,14 @@ function void Environment::build();
 		mon.cbsq=smc;
 	end
 	
+	// Connect the coverage with callback
+	begin
+		Cov_Monitor_cbs svc = new(cov);
+		mon.vcbs=svc;
+	end
+
+	
+
 endfunction : build
 
 //---------------------------------------------------------------------------

@@ -28,7 +28,6 @@ function Prs_generator::new(input mailbox gen2drv, input event drv2gen,
 		this.gen2drv=gen2drv;
 		this.drv2gen=drv2gen;
 		this.cfg=cfg;
-		//blueprint=new();
 endfunction : new
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -37,8 +36,11 @@ endfunction : new
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 task Prs_generator::run();
 	// Loop over all powrbudjet values
+	int ok;
 	repeat (cfg.nPwrBdj) begin
-		assert(randomize(cfg));
+		ok=randomize(cfg);
+		if(!ok)
+			$fatal("Config object randomize was faild");
 		pwr_bdj = cfg.pwr_bdj;
 		blueprint=new();
 		blueprint.turn_off_ports();
@@ -48,7 +50,9 @@ task Prs_generator::run();
 		// Loop over all number of transaction
 		repeat(cfg.nTrans) begin
 			blueprint=new();
-			assert(blueprint.randomize());
+			ok=blueprint.randomize();
+			if(!ok)
+				$fatal("Config object randomize was faild");
 			blueprint.pwr_bdj=pwr_bdj;
 			blueprint.display($sformatf("@%0t: ", $time));
 			gen2drv.put(blueprint);

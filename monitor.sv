@@ -24,10 +24,12 @@ endclass : Monitor_cbs
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 class Monitor;
 	prs_struct_t qtprs;	// object transaction
-	Monitor_cbs cbsq;	// callback objecti
+	Monitor_cbs cbsq;	// callback object
+	Monitor_cbs vcbs;	// Coverage callback
+	string name;
 	virtual interface Inf.MON imon;
 
-	extern function new(virtual Inf.MON imon);
+	extern function new(virtual Inf.MON imon, string name);
 	extern task run();
 	extern task receive(output  prs_struct_t tprs);
 	extern function void display(input  prs_struct_t tprs);
@@ -36,8 +38,9 @@ endclass : Monitor
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // new() : construct the monitor object
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
-function Monitor::new(virtual Inf.MON imon);
+function Monitor::new(virtual Inf.MON imon, string name);
 	this.imon=imon;
+	this.name=name;
 endfunction
 
 
@@ -51,6 +54,7 @@ task Monitor::run();
 		display(tprs);
 		this.qtprs=tprs;
 		cbsq.post_trans(this);
+		vcbs.post_trans(this);
 
 	end
 endtask : run
@@ -75,8 +79,8 @@ endtask : receive
 // display(): Display the transaction
 //---------------------------------------------------------------------------
 function void Monitor::display(input  prs_struct_t tprs);
-	$display("From monitor @%0t det=%b, off=%b, prio=%b, pwr_bdj=%0d, ports_off=%b, on=%b"
-	,$time, tprs.det, tprs.off, tprs.prio,
+	$display("From %s @%0t det=%b, off=%b, prio=%b, pwr_bdj=%0d, ports_off=%b, on=%b"
+	,this.name, $time, tprs.det, tprs.off, tprs.prio,
 		tprs.pwr_bdj, tprs.ports_off, tprs.on);
 endfunction : display
 

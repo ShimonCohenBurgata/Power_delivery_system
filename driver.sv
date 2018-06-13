@@ -9,8 +9,24 @@
 `define DRIVER__SV
 
 /////////////////////////////////////////////////////////////////////
+// Driver Monitor callback class
+// Called before transaction is transmitted
+// Actual implementation is in environment.sv file
+/////////////////////////////////////////////////////////////////////
+typedef class Driver;
+class Driver_cbs;
+	virtual task pre_trans(input Driver drv);
+		// Here you can override randomazation
+		drv.send(drv.tr);		
+	endtask : pre_trans
+endclass : Driver_cbs
+
+/////////////////////////////////////////////////////////////////////
 class Driver;
+
+	Driver_cbs cbsq;
 	mailbox gen2drv; 		// For cells sent from generator
+	Prs_trans tr;
 	event drv2gen; 			// Tell generator when I am done with cell
 	virtual interface Inf.DRV iprs;// Virtual interface for transmitting transactions
 
@@ -32,6 +48,8 @@ function Driver::new(input mailbox gen2drv, input event drv2gen,
 	this.gen2drv = gen2drv;
 	this.drv2gen = drv2gen;
 	this.iprs = iprs;
+	tr=new();
+	cbsq=new();
 endfunction : new
 
 //------------------------------------------------------------------------------
@@ -40,14 +58,12 @@ endfunction : new
 //------------------------------------------------------------------------------
 
 task Driver::run();
-	Prs_trans tr;
-	tr=new();
 	forever begin
 		// Read transaction at the front of mailbox
 		gen2drv.peek(tr);
 
 		// Send transaction
-		send(tr);
+		cbsq.pre_trans(this);
 
 		// Remove transaction from mailbox
 		gen2drv.get(tr);

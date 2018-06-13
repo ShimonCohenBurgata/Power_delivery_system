@@ -83,7 +83,7 @@ always_comb begin
 	else if(pwr_avail>=225 && pwr_avail<240)
 		num_ports=15;
 	else if(pwr_avail>=240 && pwr_avail<255)
-		num_ports=16;
+		num_ports=15;
 	
 		
 	

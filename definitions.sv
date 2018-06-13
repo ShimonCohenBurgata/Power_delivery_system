@@ -1,1 +1,1 @@
-`define numPorts 16
+`define numPorts 4
